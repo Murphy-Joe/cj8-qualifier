@@ -1,55 +1,5 @@
 from typing import Any, List, Optional
-
-def printTop(maxChar: int) -> str:
-    spacer = maxChar + 2
-    top = "┌"+"─"*spacer+"┐"
-    print(top)
-    return top
-
-def printRow(row: List, maxChar: int) -> str:
-    vert = "│"
-    fmtRow = ""
-    for item in row:
-        fmtItem = f"{vert} {item} {vert:>{maxChar-len(item)+1}}"
-        fmtRow += fmtItem
-    print(fmtRow)
-    return fmtRow 
-
-def printBottom(maxChar: int) -> str:
-    spacer = maxChar + 2
-    bottom = "└"+"─"*spacer+"┘"
-    print(bottom)
-    return bottom
-
-def getLongestRow(rows: List[List[Any]]) -> int:
-    longestRow = 0
-    for row in rows:
-        rowLen = 0
-        for item in row:
-            itemLen = len(str(item))
-            rowLen += itemLen
-        #print(rowLen)
-        if rowLen > longestRow:
-            longestRow = rowLen
-    return longestRow
-
-def table(rows: List[List[Any]]):
-    maxChars = getLongestRow(rows)
-    printTop(maxChars)
-    for row in rows:
-        printRow(row, maxChars)
-    printBottom(maxChars)
-
-rows1=[
-        ["Lemon"],
-        ["Sebastiaan"],
-        ["KutieKatj9"],
-        ["Jake"],
-        ["Not Joe"]
-    ]
-
-#table(rows1)
-
+import copy 
 
 rows2 = [
     ["joe", "ben", "mo"],
@@ -58,8 +8,11 @@ rows2 = [
     ["eve", "marley", "delly"]
 ]
 
+labels = []
+labels = ['First', 'Second', 'Third']
+centered = True
+#centered = False
 
-table(rows2)
 
 def make_table(rows: List[List[Any]], labels: Optional[List[Any]] = None, centered: bool = False) -> str:
     """
@@ -70,5 +23,119 @@ def make_table(rows: List[List[Any]], labels: Optional[List[Any]] = None, center
     :return: A table representing the rows passed in.
     """
 
-    
+    #asciis = "│ ─ ┌ ┬ ┐ ├ ┼ ┤ └ ┴ ┘"
+    ul = '┌'
+    um = '┬'
+    ur = '┐'
+    ml = '├'
+    mm = '┼'
+    mr = '┤'
+    ll = '└'
+    lm = '┴'
+    lr = '┘'
+    horiz = '─'
+    vert = '│'
+
+    labelTop = ""
+    labelRow = ""
+
+    topBuilder = ""
+    rowBuilder = ""
+    botBuilder = ""
+    lastRow = len(rows)-1
+
+
+    for i, row in enumerate(rows):
+        if i == 0:
+
+            botBuilder += ll
+            if labels: 
+                labelTop += ul
+
+        lastItem = len(row)-1
+
+        for n, item in enumerate(row):
+            lenCheck = copy.deepcopy(rows)
+            if labels:
+                lenCheck.insert(0,labels)
+            column = [row[n] for row in lenCheck]
+            longestItem = max(column,key=len)
+            colMaxChars = len(longestItem)
+            spacing = colMaxChars + 2
+
+            padding =  colMaxChars - len(item) + 1
+            if labels:
+                lblPadding = colMaxChars - len(labels[n]) + 1
+            # first item
+            if n == 0:
+                if not centered:
+                    # | item     |
+                    rowBuilder += f"{vert} {item} {vert:>{padding}}"
+                else:
+                    rowBuilder += f"{vert} {item:^{colMaxChars}} {vert}"
+                if i == 0:
+                    botBuilder += f"{horiz*spacing}"
+                    if labels: 
+                        labelTop += f"{horiz*spacing}"
+                        if not centered:
+                            labelRow += f"{vert} {labels[n]} {vert:>{lblPadding}}"
+                        else: 
+                            labelRow += f"{vert} {labels[n]:^{colMaxChars}} {vert}"
+                            # ├───────────
+                        topBuilder += f"{ml}{horiz*(spacing)}"
+                    else:
+                        # ┌───────────
+                        topBuilder += f"{ul}{horiz*(spacing)}"
+
+            
+            # last item  
+            elif n == lastItem:
+                if not centered:
+                    # item       |
+                    rowBuilder += f" {item} {vert:>{padding}}\n"
+                else:
+                    rowBuilder += f" {item:^{colMaxChars}} {vert}\n"
+                if i == 0:
+                    # ────────────
+                    botBuilder += f"{horiz*spacing}"
+                    if labels:
+                        labelTop += f"{horiz*spacing}"
+                        if not centered:
+                            labelRow += f" {labels[n]} {vert:>{lblPadding}}\n"
+                        else: 
+                            labelRow += f" {labels[n]:^{colMaxChars}} {vert}\n"
+                        # ───────────┤
+                        topBuilder += f"{horiz*(spacing)}{mr}"
+                    else:
+                        # ───────────┐
+                        topBuilder += f"{horiz*spacing}{ur}"
+
+            # middle item
+            else:
+                if not centered:
+                    # item       |
+                    rowBuilder += f" {item} {vert:>{padding}}"
+                else:
+                    rowBuilder += f" {item:^{colMaxChars}} {vert}"
+                if i == 0:
+                    if labels:
+                        labelTop += f"{um}{horiz*spacing}{um}"
+                        if not centered:
+                            labelRow += f" {labels[n]} {vert:>{lblPadding}}"
+                        else:
+                            labelRow += f" {labels[n]:^{colMaxChars}} {vert}"
+                        # ┼────────────┼
+                        topBuilder += f"{mm}{horiz*spacing}{mm}"
+                    else:
+                        # ┬────────────┬
+                        topBuilder += f"{um}{horiz*spacing}{um}"
+                    # ┴────────────┴
+                    botBuilder += f"{lm}{horiz*spacing}{lm}"
+
+        if i == 0:
+            botBuilder += lr
+            if labels:
+                labelTop += ur
+        result = f"{labelTop}\n{labelRow}{topBuilder}\n{rowBuilder}{botBuilder}"
+    return result
 
